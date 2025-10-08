@@ -17,7 +17,10 @@
  * @constant {string} SPREADSHEET_ID - ID da planilha Google Sheets
  */
 const CONFIG = {
-    SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbz7ac8uTSFJYr41xd0WCwVUeGqPsJ2eq_YGsbLTv5VQj_LjmOYdvfcJiq-hHXRH1eoCEA/exec', // URL do Google Apps Script
+    // URL original do Google Apps Script
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbz7ac8uTSFJYr41xd0WCwVUeGqPsJ2eq_YGsbLTv5VQj_LjmOYdvfcJiq-hHXRH1eoCEA/exec',
+    // URL com proxy CORS para resolver problemas de CORS
+    SCRIPT_URL: 'https://corsproxy.io/?https://script.google.com/macros/s/AKfycbz7ac8uTSFJYr41xd0WCwVUeGqPsJ2eq_YGsbLTv5VQj_LjmOYdvfcJiq-hHXRH1eoCEA/exec',
     SPREADSHEET_ID: '108kZQfRUYt9TcYOUlXNjuToyihUxH3n8QhDLwmcyVjA', // ID da planilha do usuário
     VERSION: '1.1',
     YEAR: '2025',
