@@ -13,19 +13,108 @@
 
 /**
  * Configurações da aplicação - SUBSTITUA PELOS VALORES REAIS
- * @constant {string} SCRIPT_URL - URL do Google Apps Script implantado
+ * @constant {string} APPS_SCRIPT_URL - URL original do Google Apps Script implantado
  * @constant {string} SPREADSHEET_ID - ID da planilha Google Sheets
  */
 const CONFIG = {
     // URL original do Google Apps Script
     APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbz7ac8uTSFJYr41xd0WCwVUeGqPsJ2eq_YGsbLTv5VQj_LjmOYdvfcJiq-hHXRH1eoCEA/exec',
-    // URL com proxy CORS para resolver problemas de CORS
-    SCRIPT_URL: 'https://corsproxy.io/?https://script.google.com/macros/s/AKfycbz7ac8uTSFJYr41xd0WCwVUeGqPsJ2eq_YGsbLTv5VQj_LjmOYdvfcJiq-hHXRH1eoCEA/exec',
     SPREADSHEET_ID: '108kZQfRUYt9TcYOUlXNjuToyihUxH3n8QhDLwmcyVjA', // ID da planilha do usuário
     VERSION: '1.1',
     YEAR: '2025',
     AUTHOR: 'Vinícius Bedeschi'
 };
+
+/**
+ * Gerenciador de Proxies CORS com Fallback Automático
+ * Implementa múltiplos proxies para garantir alta disponibilidade
+ */
+class ProxyManager {
+    constructor() {
+        this.proxies = [
+            {
+                name: 'AllOrigins',
+                url: 'https://api.allorigins.win/get?url=',
+                format: (url) => this.proxies[0].url + encodeURIComponent(url),
+                parseResponse: async (response) => {
+                    const data = await response.json();
+                    return JSON.parse(data.contents);
+                }
+            },
+            {
+                name: 'CORS Anywhere',
+                url: 'https://cors-anywhere.herokuapp.com/',
+                format: (url) => this.proxies[1].url + url,
+                parseResponse: async (response) => response.json()
+            },
+            {
+                name: 'CORSProxy',
+                url: 'https://corsproxy.io/?',
+                format: (url) => this.proxies[2].url + url,
+                parseResponse: async (response) => response.json()
+            }
+        ];
+        this.currentProxyIndex = 0;
+        this.maxRetries = this.proxies.length;
+    }
+
+    /**
+     * Faz uma requisição usando proxies com fallback automático
+     * @param {string} originalUrl - URL original do Google Apps Script
+     * @param {Object} data - Dados para enviar na requisição
+     * @returns {Promise<Object>} - Resposta da requisição
+     */
+    async makeRequest(originalUrl, data) {
+        let lastError = null;
+        
+        for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+            const proxy = this.proxies[this.currentProxyIndex];
+            
+            try {
+                console.log(`Tentando proxy: ${proxy.name} (tentativa ${attempt + 1}/${this.maxRetries})`);
+                
+                const proxiedUrl = proxy.format(originalUrl);
+                
+                const response = await fetch(proxiedUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    console.log(`✅ Sucesso com proxy: ${proxy.name}`);
+                    const result = await proxy.parseResponse(response);
+                    return result;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                lastError = error;
+                console.warn(`❌ Proxy ${proxy.name} falhou:`, error.message);
+                
+                // Avança para o próximo proxy
+                this.currentProxyIndex = (this.currentProxyIndex + 1) % this.proxies.length;
+            }
+        }
+        
+        // Se chegou aqui, todos os proxies falharam
+        throw new Error(`Todos os proxies falharam. Último erro: ${lastError?.message || 'Desconhecido'}`);
+    }
+
+    /**
+     * Reseta o índice do proxy para o primeiro da lista
+     */
+    reset() {
+        this.currentProxyIndex = 0;
+    }
+}
+
+// Instância global do gerenciador de proxies
+const proxyManager = new ProxyManager();
 
 // ============================================================================
 // ESTADO GLOBAL DA APLICAÇÃO
@@ -145,23 +234,11 @@ async function makeRequest(action, data = {}) {
     try {
         showLoading();
         
-        const response = await fetch(CONFIG.SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            mode: 'cors',
-            body: JSON.stringify({
-                action: action,
-                data: data
-            })
+        // Usar o ProxyManager para fazer a requisição com fallback automático
+        const result = await proxyManager.makeRequest(CONFIG.APPS_SCRIPT_URL, {
+            action: action,
+            data: data
         });
-
-        if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
-        }
-
-        const result = await response.json();
         
         if (result.error) {
             throw new Error(result.error);
@@ -170,7 +247,21 @@ async function makeRequest(action, data = {}) {
         return result;
     } catch (error) {
         console.error('Erro na requisição:', error);
-        throw error;
+        
+        // Melhor tratamento de erro com informações específicas
+        let errorMessage = 'Erro de conexão';
+        
+        if (error.message.includes('502')) {
+            errorMessage = 'Erro de conexão: Verifique se o Google Apps Script está implantado corretamente e se a URL está correta. Erro: ' + error.message;
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Erro de conexão: Verifique se o Google Apps Script está implantado corretamente e se a URL está correta. Erro: ' + error.message;
+        } else if (error.message.includes('Todos os proxies falharam')) {
+            errorMessage = 'Erro de conexão: Todos os proxies CORS falharam. Verifique sua conexão com a internet e tente novamente em alguns minutos. Erro: ' + error.message;
+        } else {
+            errorMessage = error.message;
+        }
+        
+        throw new Error(errorMessage);
     } finally {
         hideLoading();
     }
