@@ -3,9 +3,7 @@
   "builds": [
     { "src": "api/index.js", "use": "@vercel/node" },
     { "src": "index.html", "use": "@vercel/static" },
-    { "src": "styles.css", "use": "@vercel/static" },
-    { "src": "script-production-updated.js", "use": "@vercel/static" },
-    { "src": "google-apps-script-updated.js", "use": "@vercel/static" }
+    { "src": "styles.css", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.js" },
