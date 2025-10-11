@@ -388,7 +388,7 @@ function setupFuncionarioAutoComplete() {
     }
     
     // Campo de matrícula na saída
-    const matriculaSaida = document.getElementById('saida-matricula');
+    const matriculaSaida = document.getElementById("registrar-saida-matricula");
     if (matriculaSaida) {
         matriculaSaida.addEventListener('blur', (e) => handleMatriculaChange(e, 'saida'));
         matriculaSaida.addEventListener('input', debounce((e) => handleMatriculaInput(e, 'saida'), 500));
@@ -807,7 +807,7 @@ async function loadSolicitacoesAprovadas() {
     try {
         const result = await makeRequest('getSolicitacoesAprovadas');
         if (result.success) {
-            const select = document.getElementById('saida-solicitacao');
+            const select = document.getElementById("registrar-saida-solicitacao");
             if (select) {
                 select.innerHTML = '<option value="">Selecione uma solicitação</option>';
                 result.solicitacoes.forEach(solicitacao => {
@@ -826,11 +826,11 @@ async function loadSolicitacoesAprovadas() {
                 select.addEventListener('change', (e) => {
                     const option = e.target.selectedOptions[0];
                     if (option && option.value) {
-                        document.getElementById('saida-item').value = option.dataset.item;
-                        document.getElementById('saida-quantidade').value = option.dataset.quantidade;
-                        document.getElementById('saida-matricula').value = option.dataset.matricula;
-                        document.getElementById('saida-nome-funcionario').value = option.dataset.nome;
-                        document.getElementById('saida-setor-funcionario').value = option.dataset.setor;
+                        document.getElementById("registrar-saida-item").value = option.dataset.item;
+                        document.getElementById("registrar-saida-quantidade").value = option.dataset.quantidade;
+                        document.getElementById("registrar-saida-matricula").value = option.dataset.matricula;
+                        document.getElementById("registrar-saida-nome-funcionario").value = option.dataset.nome;
+                        document.getElementById("registrar-saida-setor-funcionario").value = option.dataset.setor;
                     }
                 });
             }
@@ -1045,7 +1045,7 @@ function setupEventListeners() {
     // Formulários
     document.getElementById('form-nova-solicitacao').addEventListener('submit', handleNovaSolicitacao);
     document.getElementById('form-nova-entrada').addEventListener('submit', handleNovaEntrada);
-    document.getElementById('form-nova-saida').addEventListener('submit', handleNovaSaida);
+    document.getElementById("form-registrar-saida").addEventListener("submit", handleNovaSaida);
     document.getElementById('form-novo-item').addEventListener('submit', handleNovoItem);
     
     // Funcionalidade de funcionários
