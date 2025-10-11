@@ -142,7 +142,8 @@ async function makeRequest(action, data = {}) {
     try {
         showLoading();
         
-        const response = await fetch(CONFIG.SCRIPT_URL, {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(CONFIG.SCRIPT_URL)}`;
+        const response = await fetch(proxyUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
