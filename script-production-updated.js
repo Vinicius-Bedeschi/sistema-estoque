@@ -914,10 +914,7 @@ async function handleNovaSaida(e) {
     
     const formData = new FormData(e.target);
     const data = {
-        solicitacaoId: formData.get('solicitacao'),
-        matriculaSolicitante: formData.get('matricula'),
-        nomeFuncionario: formData.get('nomeFuncionario'),
-        setorSolicitante: formData.get('setorFuncionario'),
+        solicitacaoId: formData.get("solicitacao"),
         registradoPor: AppState.currentUser.username
     };
     
@@ -979,7 +976,7 @@ async function aprovarSolicitacao(solicitacaoId) {
     if (!confirm('Deseja aprovar esta solicitação?')) return;
     
     try {
-        const result = await makeRequest('aprovarSolicitacao', { solicitacaoId });
+        const result = await makeRequest("updateSolicitacaoStatus", { id: solicitacaoId, status: "Aprovado", atendidoPor: AppState.currentUser.username });
         if (result.success) {
             showSuccess('Solicitação aprovada com sucesso!');
             await loadSolicitacoes();
@@ -999,7 +996,7 @@ async function rejeitarSolicitacao(solicitacaoId) {
     if (!confirm('Deseja rejeitar esta solicitação?')) return;
     
     try {
-        const result = await makeRequest('rejeitarSolicitacao', { solicitacaoId });
+        const result = await makeRequest("updateSolicitacaoStatus", { id: solicitacaoId, status: "Rejeitado", atendidoPor: AppState.currentUser.username });
         if (result.success) {
             showSuccess('Solicitação rejeitada com sucesso!');
             await loadSolicitacoes();
